@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111312" />
+    <meta
+      name="description"
+      content="ปรับแต่ง EQ ของ Moondrop CHU 2 DSP ผ่าน USB ด้วย WebHID"
+    />
+    <title>Chu Studio — Equalizer</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="เมนูหลัก">
+        <a class="brand" href="./" aria-label="Chu Studio หน้าหลัก">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 36 36" fill="none">
+              <path d="M7 8v20h5l5-7 5 7h7V8h-7l-5 7-5-7H7Z" />
+              <path d="M23 18h6" />
+            </svg>
+          </span>
+          <span class="brand-name">chu<span>studio</span></span>
+        </a>
+
+        <div class="side-label">เวิร์กสเปซ</div>
+        <nav class="navigation">
+          <a class="nav-link active" href="#equalizer" aria-current="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 20V10m0-4V4m8 16v-6m0-4V4m8 16v-3m0-4V4M2 10h4m4 4h4m4-1h4" />
+            </svg>
+            <span>อีควอไลเซอร์</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-device">
+          <span class="side-label">อุปกรณ์</span>
+          <div class="mini-device">
+            <span class="device-glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 4v7m0-7 3 3m-3-3L4 7m3 4a5 5 0 0 0 5 5h1a5 5 0 0 1 5 5m0-14v7m0-7-3 3m3-3 3 3" />
+              </svg>
+            </span>
+            <span class="mini-device-copy">
+              <strong>Moondrop CHU 2</strong>
+              <span id="sidebar-device-state">ยังไม่เชื่อมต่อ</span>
+            </span>
+            <span class="status-dot" id="sidebar-status-dot"></span>
+          </div>
+        </div>
+
+        <div class="sidebar-bottom">
+          <span class="side-label">ควบคุมโดยตรง</span>
+          <p>เว็บสื่อสารกับชิป DSP ผ่าน USB โดยตรง การปรับจะยังไม่ถูกบันทึกจนกดบันทึก</p>
+        </div>
+      </aside>
+
+      <main class="main-content" id="equalizer">
+        <header class="topbar">
+          <div class="breadcrumb"><span>อุปกรณ์</span><span class="crumb-separator">/</span><strong>อีควอไลเซอร์</strong></div>
+          <div class="topbar-right">
+            <span class="browser-badge">
+              <span class="status-dot" id="topbar-status-dot"></span>
+              <span id="connection-label">ยังไม่เชื่อมต่อ</span>
+            </span>
+            <button class="button button-connect" id="connect-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 4v7m0-7 3 3m-3-3L4 7m3 7a5 5 0 0 0 5 5h1a5 5 0 0 1 5 5m0-19v7m0-7-3 3m3-3 3 3" />
+              </svg>
+              <span>เชื่อมต่ออุปกรณ์</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="page-wrap">
+          <section class="page-heading">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> CHU 2 DSP CONTROL</div>
+              <h1>ปรับเสียงในแบบของคุณ<span class="heading-period">.</span></h1>
+              <p>ปรับแต่งพาราเมตริก EQ 5 แบนด์ และบันทึกการตั้งค่าลงในสายหูฟัง</p>
+            </div>
+            <div class="device-chip" id="device-chip">
+              <span class="chip-indicator"></span>
+              <span id="device-chip-label">รอเชื่อมต่อ</span>
+            </div>
+          </section>
+
+          <section class="notice notice-browser" id="browser-notice" aria-live="polite">
+            <span class="notice-icon" aria-hidden="true">i</span>
+            <p id="browser-notice-text">กำลังตรวจสอบการรองรับ WebHID…</p>
+          </section>
+
+          <section class="workspace-grid" aria-label="ตัวควบคุมอีควอไลเซอร์">
+            <div class="panel graph-panel">
+              <div class="panel-heading graph-heading">
+                <div>
+                  <div class="panel-kicker">การตอบสนองความถี่</div>
+                  <h2>เส้นโค้งเสียง</h2>
+                </div>
+                <div class="graph-actions">
+                  <div class="curve-legend"><span></span> EQ ปัจจุบัน</div>
+                  <button class="button button-read" id="read-button" type="button" disabled>อ่านค่า</button>
+                </div>
+              </div>
+              <div class="graph-wrap">
+                <canvas id="eq-graph" aria-label="กราฟการตอบสนองความถี่ของ EQ"></canvas>
+              </div>
+              <div class="graph-footer">
+                <span>เบส</span><span>เสียงกลาง</span><span>แหลม</span>
+              </div>
+            </div>
+
+            <aside class="panel summary-panel">
+              <div class="panel-kicker">สถานะการปรับแต่ง</div>
+              <h2>ภาพรวม EQ</h2>
+              <div class="summary-metric">
+                <span id="active-band-count">0</span>
+                <span> / 5</span>
+                <small>แบนด์ที่มีการปรับ</small>
+              </div>
+              <div class="summary-divider"></div>
+              <div class="summary-row">
+                <span>พรีเซ็ต</span><strong>กำหนดเอง</strong>
+              </div>
+              <div class="summary-row">
+                <span>ช่วงความถี่</span><strong>20 Hz — 20 kHz</strong>
+              </div>
+              <div class="summary-row">
+                <span>ช่วงเกน</span><strong>±12 dB</strong>
+              </div>
+              <button class="button button-reset" id="reset-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 2.64-6.36L3 8m0-5v5h5" />
+                </svg>
+                รีเซ็ตเป็นค่าเริ่มต้น
+              </button>
+            </aside>
+          </section>
+
+          <section class="profiles-section" aria-labelledby="profiles-title">
+            <div class="section-heading">
+              <div>
+                <div class="panel-kicker">จัดเก็บในเบราว์เซอร์</div>
+                <h2 id="profiles-title">โปรไฟล์เสียง</h2>
+              </div>
+              <button class="button button-outline" id="transfer-button" type="button">นำเข้า / ส่งออก JSON</button>
+            </div>
+            <div class="panel profiles-panel">
+              <div class="profile-save">
+                <label for="profile-name">ชื่อโปรไฟล์</label>
+                <div class="profile-save-row">
+                  <input id="profile-name" type="text" maxlength="40" placeholder="เช่น ฟังเพลง · เบสกระชับ" />
+                  <button class="button button-profile-save" id="save-profile-button" type="button">บันทึกโปรไฟล์</button>
+                </div>
+              </div>
+              <div class="profile-load">
+                <label for="profile-select">โปรไฟล์ที่บันทึกไว้</label>
+                <div class="profile-load-row">
+                  <select id="profile-select" aria-label="เลือกโปรไฟล์ EQ"></select>
+                  <button class="button button-profile-action" id="load-profile-button" type="button" disabled>โหลด</button>
+                  <button class="button button-profile-action button-delete" id="delete-profile-button" type="button" disabled>ลบ</button>
+                </div>
+              </div>
+              <p class="profile-note">โปรไฟล์เก็บไว้ใน local storage ของเบราว์เซอร์นี้ และจะไม่เขียนลงหูฟังจนกดบันทึกแยกต่างหาก</p>
+            </div>
+          </section>
+
+          <section class="bands-section">
+            <div class="section-heading">
+              <div>
+                <div class="panel-kicker">ตัวกรองพาราเมตริก</div>
+                <h2>ปรับแต่ละแบนด์</h2>
+              </div>
+              <span class="precision-note">ปรับได้ละเอียด <strong>0.1 dB</strong></span>
+            </div>
+            <div class="bands-grid" id="bands-grid"></div>
+          </section>
+
+          <section class="preview-bar" aria-label="ทดลองเสียงแบบ Live">
+            <span class="preview-status-dot" aria-hidden="true"></span>
+            <div class="preview-copy">
+              <strong>ทดลองเสียงแบบ Live</strong>
+              <span id="preview-state" aria-live="polite">เชื่อมต่อและอ่าน EQ เพื่อเริ่มทดลองเสียง</span>
+            </div>
+            <button class="button button-outline" id="restore-preview-button" type="button" disabled>
+              คืนค่า EQ ที่อ่านล่าสุด
+            </button>
+          </section>
+
+          <footer class="save-bar">
+            <div class="save-copy">
+              <span class="save-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M5 4h12l3 3v13H4V4h1Zm2 0v6h9V4M8 20v-7h8v7" />
+                </svg>
+              </span>
+              <div>
+                <strong id="save-state-title">การเปลี่ยนแปลงยังไม่บันทึก</strong>
+                <span id="save-state-detail">เชื่อมต่ออุปกรณ์และอ่านค่า EQ ก่อนบันทึก</span>
+              </div>
+            </div>
+            <button class="button button-save" id="save-button" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 4h12l3 3v13H4V4h1Zm2 0v6h9V4M8 20v-7h8v7" />
+              </svg>
+              <span>บันทึกลงในอุปกรณ์</span>
+            </button>
+          </footer>
+
+          <p class="page-footnote">
+            การบันทึกจะรีสตาร์ต DSP ชั่วครู่ · เว็บจะไม่เปลี่ยนแปลงอินเทอร์เฟซเสียงสำหรับเล่นเพลง
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="profile-dialog" id="profile-dialog" aria-labelledby="profile-dialog-title">
+      <div class="dialog-heading">
+        <div>
+          <div class="panel-kicker">ไฟล์ JSON พกพาได้</div>
+          <h2 id="profile-dialog-title">นำเข้า / ส่งออกโปรไฟล์</h2>
+        </div>
+        <button class="dialog-close" id="close-profile-dialog" type="button" aria-label="ปิดหน้าต่าง">×</button>
+      </div>
+      <p class="dialog-description">คัดลอกข้อความนี้เพื่อแชร์ หรือวาง JSON ของ Chu Studio แล้วกดนำเข้า</p>
+      <textarea id="profile-json" spellcheck="false" aria-label="ข้อมูลโปรไฟล์ JSON"></textarea>
+      <div class="dialog-actions">
+        <button class="button button-outline" id="copy-profile-button" type="button">คัดลอก JSON</button>
+        <button class="button button-outline" id="download-profile-button" type="button">ดาวน์โหลด .json</button>
+        <label class="button button-outline file-import-button">
+          เลือกไฟล์ JSON
+          <input id="profile-file" type="file" accept=".json,application/json" />
+        </label>
+        <button class="button button-profile-save" id="import-profile-button" type="button">นำเข้าโปรไฟล์</button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
